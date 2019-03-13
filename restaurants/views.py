@@ -5,6 +5,7 @@ from django.shortcuts import render, reverse, redirect, get_object_or_404
 from django.views.decorators.http import require_http_methods
 from restaurants.forms import LoginForm, ProfileForm, ReservationForm, RestaurantForm
 from restaurants.models import Category, Profile, Restaurant
+from django.http import HttpResponseRedirect
 
 def restaurants_list(request):
     restaurants = Restaurant.objects.all()
@@ -22,6 +23,8 @@ def restaurant_show(request, id):
 @login_required
 def restaurant_edit(request, id):
     restaurant = Restaurant.objects.get(pk=id)
+    if restaurant.owner != request.user:
+        return HttpResponseRedirect("/")
     if request.method == 'POST':
         form = RestaurantForm(request.POST, instance=restaurant)
         if form.is_valid():
