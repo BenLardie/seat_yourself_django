@@ -1,0 +1,15 @@
+{% extends 'base.html'%}
+{% block content %}
+<h2 class=search-results>Your search returned <span class="results"> {{restaurants.count}} </span> results</h2>
+<div class=search-container>
+{% for restaurant in restaurants %}
+  <div class=search-restaurant>
+    <a href="{% url 'restaurant_show' id=restaurant.pk%}">
+    <img src="{{ restaurant.image }}" alt="">
+  </a>
+  <p>{{ restaurant.name }}</p>
+</div>
+  {% endfor %}
+</div>
+
+{% endblock %}

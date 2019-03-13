@@ -1,6 +1,16 @@
 {% extends 'base.html' %}
 {% block content %}
 <main class='restaurant'>
+
+  {% if related_restaurants.count > 0 %}
+  <p>Owned by: {{restaurant.owner}}</p>
+  <ul>
+    {% for restaurant in related_restaurants%}
+    <li><a href="{%url 'restaurant_show' id=restaurant.pk%}">{{restaurant.name}}</a></li>
+    {%endfor%}
+  </ul>
+
+  {%endif%}
     <h2>{{ restaurant.name }}</h2>
     <img src="{{restaurant.image}}" alt="">
     <h3>{{ restaurant.opening_time }} | {{ restaurant.closing_time }}</h3>
@@ -9,13 +19,26 @@
     {% if user.is_authenticated %}
       {% if restaurant.owner == user %}
       <p> <a href="{% url 'restaurant_edit' id=restaurant.pk %}">Edit restaurant details</a> </p>
-      {% else %}
+        {% if restaurant.reservations.exists %}
+          <ol>
+            {% for reservation in restaurant.reservations.all %}
+              <li>
+                <p> <time datetime="{{ reservation.date_and_time }}">{{ reservation.date }} at {{ reservation.time }} </time> </p>
+                <p> {{ reservation.user.profile.last_name }}, party of {{ reservation.party_size }} </p>
+                {% if reservation.notes %}
+                  <p class='notes'>{{ reservation.notes }}</p>
+                {% endif %}
+              </li>
+            {% endfor %}
+          </ol>
+        {% else %}
           <p>No upcoming reservations</p>
         {% endif %}
-      
+      {% endif %}
 
       {% if reservations %}
       <ol>
+        {% if user != restaurant.owner %}
         {% for reservation in reservations %}
         <li>
               <p> <time datetime="{{ reservation.date_and_time }}">{{ reservation.date }} at {{ reservation.time }} </time> </p>
@@ -27,11 +50,15 @@
         {% endfor %}
       </ol>
       {% endif %}
+      {% endif %}
       <form method='POST' action="{% url 'reservation_create' restaurant_id=restaurant.pk%}">
         {% csrf_token %}
         {{ reservation_form.as_p }}
         <input type="submit" value="Place reservation">
       </form>
     {% endif %}
+
+
+
 </main>
 {% endblock %}

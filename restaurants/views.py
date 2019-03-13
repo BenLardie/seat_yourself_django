@@ -5,7 +5,7 @@ from django.shortcuts import render, reverse, redirect, get_object_or_404
 from django.views.decorators.http import require_http_methods
 from restaurants.forms import LoginForm, ProfileForm, ReservationForm, RestaurantForm
 from restaurants.models import Category, Profile, Restaurant
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 
 def restaurants_list(request):
     restaurants = Restaurant.objects.all()
@@ -14,7 +14,8 @@ def restaurants_list(request):
 
 def restaurant_show(request, id):
     restaurant = Restaurant.objects.get(pk=id)
-    context = {'restaurant': restaurant, 'title': restaurant.name}
+    related_restaurants = Restaurant.objects.filter(owner=restaurant.owner).exclude(name=restaurant.name)
+    context = {'restaurant': restaurant, 'title': restaurant.name, 'related_restaurants': related_restaurants}
     if request.user.is_authenticated:
         context['reservations'] = restaurant.reservations.filter(user=request.user)
         context['reservation_form'] = ReservationForm()
@@ -123,3 +124,11 @@ def signup(request):
     else:
         form = UserCreationForm()
     return render(request, 'signup.html', {'form': form})
+
+
+def restaurant_search(request):
+    query = request.GET['query']
+    search_results = Restaurant.objects.filter(name=query)
+    context = {'restaurants': search_results, 'query': query}
+    response = render(request, 'search.html', context)
+    return HttpResponse(response)
