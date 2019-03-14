@@ -55,17 +55,19 @@ class ReservationForm(ModelForm):
         cleaned_date = cleaned_data['date']
         cleaned_party_size = cleaned_data['party_size']
         restaurant = self.instance.restaurant
-        # import ipdb; ipdb.set_trace()
 
-        # closing =
-
+        closing = restaurant.closing_time
         reservation_datetime = datetime(cleaned_date.year, cleaned_date.month, cleaned_date.day, cleaned_time.hour, cleaned_time.minute)
+        closing_datetime = datetime(cleaned_date.year, cleaned_date.month, cleaned_date.day, closing.hour, closing.minute)
+
+        if restaurant.open_past_midnight() and reservation_datetime.time() > restaurant.closing_time:
+            closing_datetime += timedelta(hours=24)
+
+        if closing_datetime - reservation_datetime < timedelta(hours=1):
+            self.add_error('time', 'Reservation must be at least one hour before closing time')
+
         if reservation_datetime < (datetime.now() + timedelta(minutes=30)):
             self.add_error('time', 'Reservation must be at least 30 minutes in future')
-
-        if reservation_datetime.time > (time(Restaurant.closing_time) - timedelta(hours=1)):
-            self.add_error('time', 'reservation must be made an hour before closing')
-            breakpoint()
 
         if not restaurant.room_for(cleaned_date, cleaned_time, cleaned_party_size):
             self.add_error('time', 'Restaurant is booked at that time')
